@@ -18,6 +18,8 @@ void windowwindows::getActiveWindow(Napi::Object& obj) {
 	GetWindowThreadProcessId(foreground_window, &pid);
 	// Process
 	std::string fullpath;
+	std::string shortpath;
+
 	if (HANDLE hProc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_QUERY_INFORMATION, false, pid)) {
 		TCHAR process_filename[MAX_PATH];
 		DWORD charsCarried = MAX_PATH;
@@ -32,7 +34,8 @@ void windowwindows::getActiveWindow(Napi::Object& obj) {
 	const size_t last_slash_idx = fullpath.find_last_of("\\/");
 
 	if (std::string::npos != last_slash_idx) {
-		fullpath.erase(0, last_slash_idx + 1);
+		shortpath = fullpath;
+		shortpath.erase(0, last_slash_idx + 1);
 	}
 
 	// Last input time
@@ -55,6 +58,7 @@ void windowwindows::getActiveWindow(Napi::Object& obj) {
     	obj.Set("windowType", "0");
     	obj.Set("windowPid", "0");
     	obj.Set("idleTime", std::to_string(idle_time));
+		obj.Set("windowPath", "");
     	return;
     }
 
@@ -62,12 +66,13 @@ void windowwindows::getActiveWindow(Napi::Object& obj) {
 	std::wstring_convert<std::codecvt_utf8<wchar_t>> myconv;
 
 	obj.Set("os", "windows");
-	obj.Set("windowClass", fullpath);
+	obj.Set("windowClass", shortpath);
 	obj.Set("windowName", myconv.to_bytes(ws));
 	obj.Set("windowDesktop", "0");
 	obj.Set("windowType", "0");
 	obj.Set("windowPid", std::to_string(pid));
 	obj.Set("idleTime", std::to_string(idle_time));
+	obj.Set("windowPath", fullpath);
 }
 
 Napi::Object windowwindows::getActiveWindowWrapped(const Napi::CallbackInfo& info)
